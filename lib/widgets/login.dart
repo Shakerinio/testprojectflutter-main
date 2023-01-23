@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:test_project/utils/globals.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 
 class LoginScreen extends StatefulWidget {
   LoginScreen(
@@ -48,7 +50,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 children: <Widget>[
                   if (!_isLogin)
                     Text(
-                      'Profile',
+                      'Registration',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: Theme.of(context).accentColor,
@@ -57,25 +59,21 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   if (!_isLogin)
                     TextFormField(
-                      key: ValueKey('email'),
-                      autocorrect: false,
-                      textCapitalization: TextCapitalization.none,
+                      key: ValueKey('username'),
+                      autocorrect: true,
+                      textCapitalization: TextCapitalization.words,
                       enableSuggestions: false,
                       validator: (value) {
-                        if (value == null || !value.contains('@')) {
-                          checkEmail = false;
-                          return 'Please enter a valid email address.';
-                        } else {
-                          checkEmail = true;
+                        if (value!.isEmpty || value.length < 4) {
+                          checkUserName = false;
+                          return 'Please enter at least 4 characters';
                         }
+                        checkUserName = true;
+                        return null;
                       },
-                      keyboardType: TextInputType.emailAddress,
-                      decoration: InputDecoration(
-                        labelText: 'Email address',
-                      ),
+                      decoration: InputDecoration(labelText: 'Username'),
                       onSaved: (value) {
-                        _userEmail = value!;
-                        emailUser = value;
+                        _userLogin = value!;
                       },
                     ),
                   if (_isLogin)
@@ -88,29 +86,36 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                   TextFormField(
-                    key: ValueKey('username'),
-                    autocorrect: true,
-                    textCapitalization: TextCapitalization.words,
+                    key: ValueKey('email'),
+                    autocorrect: false,
+                    textCapitalization: TextCapitalization.none,
                     enableSuggestions: false,
                     validator: (value) {
-                      if (value!.isEmpty || value.length < 4) {
-                        checkUserName = false;
-                        return 'Please enter at least 4 characters';
+                      if (value == null || !value.contains('@')) {
+                        checkEmail = false;
+                        return 'Please enter a valid email address.';
+                      } else {
+                        checkEmail = true;
                       }
-                      checkUserName = true;
-                      return null;
                     },
-                    decoration: InputDecoration(labelText: 'Username'),
+                    keyboardType: TextInputType.emailAddress,
+                    decoration: InputDecoration(
+                      labelText: 'Email address',
+                    ),
+                    onChanged: (text) {
+                      _userEmail = text;
+                    },
                     onSaved: (value) {
-                      _userLogin = value!;
+                      _userEmail = value!;
+                      emailUser = value;
                     },
                   ),
                   TextFormField(
                     key: ValueKey('password'),
                     validator: (value) {
-                      if (value!.isEmpty || value.length < 5) {
+                      if (value!.isEmpty || value.length < 6) {
                         checkPassword = false;
-                        return 'Password must be at least 5 characters long.';
+                        return 'Password must be at least 6 characters long.';
                       }
                       checkPassword = true;
                       return null;
@@ -133,6 +138,9 @@ class _LoginScreenState extends State<LoginScreen> {
                         },
                       ),
                     ),
+                    onChanged: (text) {
+                      _userPassword = text;
+                    },
                     obscureText: !_passwordVisible,
                     onSaved: (value) {
                       _userPassword = value!;
@@ -142,14 +150,32 @@ class _LoginScreenState extends State<LoginScreen> {
                   RaisedButton(
                     color: Theme.of(context).accentColor,
                     textColor: Color.fromARGB(255, 255, 255, 255),
-                    child: Text(_isLogin ? 'Login' : 'Signup'),
+                    child: Text(_isLogin ? 'Login' : 'Sign up'),
                     onPressed: () async {
                       _trySubmit();
 
                       if (checkEmail == true &&
                           checkPassword == true &&
                           checkUserName == true) {
-                        Navigator.pushNamed(context, '/profile');
+                        if (!_isLogin) {
+                          FirebaseAuth.instance
+                              .createUserWithEmailAndPassword(
+                                  email: _userEmail, password: _userPassword)
+                              .then((value) =>
+                                  Navigator.pushNamed(context, '/profile'))
+                              .onError((error, stackTrace) {
+                            print('Error ${error.toString()}');
+                          });
+                        } else {
+                          FirebaseAuth.instance
+                              .signInWithEmailAndPassword(
+                                  email: _userEmail, password: _userPassword)
+                              .then((value) =>
+                                  Navigator.pushNamed(context, '/profile'))
+                              .onError((error, stackTrace) {
+                            print('Error ${error.toString()}');
+                          });
+                        }
                       }
                     },
                   ),

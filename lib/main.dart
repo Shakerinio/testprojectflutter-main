@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:test_project/screens/authScreen.dart';
 
-import 'package:test_project/screens/auth.dart';
-import './screens/profile.dart';
-import './utils/globals.dart';
+import 'screens/profileScreen.dart';
+import 'screens/weatherScreen.dart';
 
-void main() => runApp(const MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
+  runApp(const MyApp());
+}
 
 class MyApp extends StatelessWidget {
   const MyApp({Key? key}) : super(key: key);
@@ -29,6 +34,7 @@ class MyApp extends StatelessWidget {
       routes: <String, WidgetBuilder>{
         '/login': (BuildContext context) => AuthScreen(),
         '/profile': (BuildContext context) => const ProfileScreen(),
+        '/weather': (BuildContext context) => WeatherScreen(),
       },
     );
   }
